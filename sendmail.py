@@ -2,11 +2,11 @@
 
 import argparse
 import configparser
+import html
 import os.path
+import platform
 import smtplib
 import sys
-import platform
-import html
 from email.header import Header
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
@@ -28,7 +28,7 @@ def read_content_from_stdin(args):
     try:
         content_from_stdin = sys.stdin.read()
         args.content = content_from_stdin
-    except TypeError:
+    except BaseException:
         # No content from stdin, ignore it.
         pass
 
@@ -73,9 +73,11 @@ def send(args):
 
 def send_mail(args, message):
     smtp = smtplib.SMTP_SSL(mail_config["host"])
-    smtp.login(mail_config["user"], mail_config["pass"])
-    smtp.sendmail(mail_config["user"], get_to_addrs(args), message.as_string())
-    smtp.quit()
+    try:
+        smtp.login(mail_config["user"], mail_config["pass"])
+        smtp.sendmail(mail_config["user"], get_to_addrs(args), message.as_string())
+    finally:
+        smtp.quit()
 
 
 def add_attachments(args, message):
